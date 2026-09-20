@@ -316,7 +316,18 @@ class CSGConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """set unique id for the config entry, abort if already configured"""
         # TODO: username (mobile) may not be the best unique id
         unique_id = f"CSG-{username}"
+        # if the account (mobile) is already configured, treat this login as
+        # re-authentication: update the existing entry (keep bound accounts and
+        # settings) instead of aborting with "already configured"
+        existing_entry = None
+        for entry in self._async_current_entries():
+            if entry.unique_id == unique_id:
+                existing_entry = entry
+                break
         await self.async_set_unique_id(unique_id)
+        if existing_entry is not None:
+            self._reauth_entry = existing_entry
+            return
         self._abort_if_unique_id_configured()
 
     async def create_or_update_config_entry(

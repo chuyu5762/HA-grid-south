@@ -377,7 +377,14 @@ class CSGOptionsFlowHandler(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        # HA >= 2024.11 exposes OptionsFlow.config_entry as a read-only property
+        # that is populated automatically from the handler, so assigning to it
+        # raises AttributeError and breaks the options/config flow (HTTP 500).
+        # Only set it explicitly on older HA versions.
+        try:
+            self.config_entry = config_entry
+        except AttributeError:
+            pass
         self.all_electricity_accounts: list[CSGElectricityAccount] = []
 
     async def async_step_init(

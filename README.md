@@ -67,13 +67,26 @@
 5. 搜索 **China Southern Power Grid** 并安装
 6. **重启 Home Assistant**
 
-### 方法二：手动安装
+> 💡 若 GitHub 下载超时/失败（国内网络常见），请改用下方 **CNB 备用存储库** 安装，两者代码完全一致。
 
-1. 下载本仓库的 [最新代码](https://github.com/chuyu5762/HA-grid-south/archive/refs/heads/master.zip)
+### 方法二：HACS + CNB 备用存储库（GitHub 下载失败时）
+
+1. 打开 HACS → 集成 → 右上角 **三个点** → **自定义存储库**
+2. 填写：
+   - **存储库**: `yixuyun/HA-grid-south`
+   - **类别**: 选择 `集成`
+3. 点击 **添加**，搜索 **China Southern Power Grid** 并安装
+4. **重启 Home Assistant**
+
+CNB 仓库地址：<https://cnb.cool/yixuyun/HA-grid-south>
+
+### 方法三：手动安装
+
+1. 下载[最新代码](https://github.com/chuyu5762/HA-grid-south/archive/refs/heads/master.zip)（GitHub 不通时可用 [CNB 归档](https://cnb.cool/yixuyun/HA-grid-south/-/archive/master/HA-grid-south-master.zip)）
 2. 解压后，将 `custom_components/china_southern_power_grid_stat` 文件夹复制到 Home Assistant 的 `config/custom_components/` 目录下
 3. **重启 Home Assistant**
 
-### 方法三：SSH 命令安装
+### 方法四：SSH 命令安装
 
 ```bash
 # 进入 Home Assistant 配置目录

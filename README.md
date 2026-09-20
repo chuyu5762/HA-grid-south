@@ -12,6 +12,13 @@
 ### 2026-02-01
 - **修复 API 响应解析错误**：将 `Accept-Encoding` 从 `gzip, deflate, br` 改为 `gzip, deflate`，解决因缺少 Brotli 解压库导致 API 响应无法正确解析的问题。
 
+### 2026-09-21
+- **修复配置向导 500 错误**：兼容 HA 2024.11+ 将 `OptionsFlow.config_entry` 改为只读属性导致的 `Internal Server Error`。
+- **修复重新登录卡死**：重新登录已存在的账号时改为更新原条目（保留已绑定的缴费号和设置），不再中止。
+- **中文/英文实体友好名**：传感器显示「账户余额 / 本月用电量」等可读名称，而非 `<account>-<suffix>`。
+- **电费/阶梯数据兜底**：日度电费接口异常时改用年度电费数据推算当月电费/用电量/当前阶梯；接口为空时保留上次数值而不是翻成「未知」。
+- **稳定性**：请求超时、失败指数退避重试、会话过期自动降频与自愈。
+
 ---
 
 ## 支持功能
@@ -137,6 +144,11 @@ A: 可以使用手动安装方法，直接下载代码并复制到 `custom_compo
 
 ### 贡献者
 - [lyylyylyylyy](https://github.com/lyylyylyylyy): PR [#30](https://github.com/CubicPill/china_southern_power_grid_stat/pull/30) 短信验证码登录支持
+- [hitushen](https://github.com/hitushen): 以下上游 PR 已合并进本仓库
+  - PR [#51](https://github.com/CubicPill/china_southern_power_grid_stat/pull/51) 请求超时，防止挂起请求阻塞集成卸载
+  - PR [#52](https://github.com/CubicPill/china_southern_power_grid_stat/pull/52) 修正 `en.json` 英文文案并补充实体名称
+  - PR [#53](https://github.com/CubicPill/china_southern_power_grid_stat/pull/53) 重新登录更新已有条目；兼容 HA >= 2024.11 的 OptionsFlow
+  - PR [#54](https://github.com/CubicPill/china_southern_power_grid_stat/pull/54) 当月电费兜底、失败重试与会话自愈
 
 感谢[瀚思彼岸](https://bbs.hassbian.com/)论坛以下帖子作者的辛苦付出，排名不分先后
 

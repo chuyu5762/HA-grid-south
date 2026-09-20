@@ -5,7 +5,7 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-> 本仓库 Fork 自 [CubicPill/china_southern_power_grid_stat](https://github.com/CubicPill/china_southern_power_grid_stat)，由于原作者已停止维护，本仓库将继续维护并修复问题。
+> 本仓库为 **再分叉仓库**：由 [wongshandev/HA-grid-south](https://github.com/wongshandev/HA-grid-south) Fork 而来，而 [wongshandev/HA-grid-south](https://github.com/wongshandev/HA-grid-south) 则 Fork 自最上游原项目 [CubicPill/china_southern_power_grid_stat](https://github.com/CubicPill/china_southern_power_grid_stat)（原作者已停止维护，本仓库将继续维护并修复问题）。
 
 ## 修复记录
 

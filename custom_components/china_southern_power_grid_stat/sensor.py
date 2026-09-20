@@ -248,14 +248,14 @@ class CSGBaseSensor(
         self._entity_suffix = entity_suffix
         self._attr_extra_state_attributes = {}
         self._extra_state_attributes_key = extra_state_attributes_key
+        # Show friendly / translated entity names (see translations/*.json)
+        # instead of raw suffixes like "<account>-this_month_total_usage".
+        self._attr_has_entity_name = True
+        self._attr_translation_key = entity_suffix
 
     @property
     def unique_id(self) -> str | None:
         return f"{DOMAIN}.{self._account_number}.{self._entity_suffix}"
-
-    @property
-    def name(self) -> str | None:
-        return f"{self._account_number}-{self._entity_suffix}"
 
     @property
     def should_poll(self) -> bool:

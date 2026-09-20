@@ -2,6 +2,7 @@
 """The China Southern Power Grid Statistics integration."""
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 
@@ -31,18 +32,45 @@ from .sensor import CSGCostSensor, CSGEnergySensor
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 _LOGGER = logging.getLogger(__name__)
 
+# bounds so install/uninstall never hang on slow/unreachable CSG API
+# (HA box often has flaky access to 95598.csg.cn, same as to github.com)
+SETUP_VERIFY_TIMEOUT = 8  # seconds
+LOGOUT_TIMEOUT = 8  # seconds
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up China Southern Power Grid Statistics from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    # validate session, re-authenticate if needed
+    # Validate session, but never let a slow/unreachable CSG API block setup.
+    # Only an explicit "login expired" (NotLoggedIn) should trigger reauth;
+    # a network timeout/error is allowed to proceed, the coordinator will
+    # surface session state in the background on first refresh.
     client = CSGClient.load(
         {
             CONF_AUTH_TOKEN: entry.data[CONF_AUTH_TOKEN],
         }
     )
-    if not await hass.async_add_executor_job(client.verify_login):
+    try:
+        logged_in = await asyncio.wait_for(
+            hass.async_add_executor_job(client.verify_login),
+            timeout=SETUP_VERIFY_TIMEOUT,
+        )
+    except asyncio.TimeoutError:
+        _LOGGER.warning(
+            "Account %s: session verification timed out, continuing setup "
+            "(data refresh will retry in background)",
+            entry.data[CONF_USERNAME],
+        )
+        logged_in = None
+    except Exception as err:  # noqa: BLE001 - network errors must not block setup
+        _LOGGER.warning(
+            "Account %s: session verification failed (%s), continuing setup",
+            entry.data[CONF_USERNAME],
+            err,
+        )
+        logged_in = None
+    if logged_in is False:
         raise ConfigEntryAuthFailed("Login expired")
 
     hass.data[DOMAIN][entry.entry_id] = {}
@@ -97,18 +125,43 @@ async def async_remove_config_entry_device(
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Handle removal of an entry."""
+    """Handle removal of an entry.
+
+    Logs out from CSG in the background with a hard timeout so removal never
+    blocks on slow/unreachable 95598.csg.cn. The entry is removed regardless
+    of whether the remote logout succeeds.
+    """
     _LOGGER.info("Removing entry: account %s", entry.data[CONF_USERNAME])
 
-    # logout
     def client_logout():
-        client = CSGClient.load(
-            {
-                CONF_AUTH_TOKEN: entry.data[CONF_AUTH_TOKEN],
-            }
-        )
-        if client.verify_login():
-            client.logout(entry.data[CONF_LOGIN_TYPE])
-            _LOGGER.info("CSG account %s logged out", entry.data[CONF_USERNAME])
+        try:
+            client = CSGClient.load(
+                {
+                    CONF_AUTH_TOKEN: entry.data[CONF_AUTH_TOKEN],
+                }
+            )
+            if client.verify_login():
+                client.logout(entry.data[CONF_LOGIN_TYPE])
+                _LOGGER.info(
+                    "CSG account %s logged out", entry.data[CONF_USERNAME]
+                )
+        except Exception as err:  # noqa: BLE001 - logout is best-effort
+            _LOGGER.debug(
+                "Logout for account %s failed (ignored): %s",
+                entry.data[CONF_USERNAME],
+                err,
+            )
 
-    await hass.async_add_executor_job(client_logout)
+    async def _best_effort_logout():
+        try:
+            await asyncio.wait_for(
+                hass.async_add_executor_job(client_logout),
+                timeout=LOGOUT_TIMEOUT,
+            )
+        except (asyncio.TimeoutError, Exception) as err:  # noqa: BLE001
+            _LOGGER.debug(
+                "Best-effort logout finished or timed out (ignored): %s", err
+            )
+
+    # run in background so removal returns instantly; not awaited
+    hass.async_create_task(_best_effort_logout())

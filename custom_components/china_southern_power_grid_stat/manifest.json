@@ -2,19 +2,19 @@
   "domain": "china_southern_power_grid_stat",
   "name": "China Southern Power Grid Statistics",
   "codeowners": [
-    "@cubicpill"
+    "@chuyu5762"
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/CubicPill/china_southern_power_grid_stat/",
+  "documentation": "https://github.com/chuyu5762/HA-grid-south",
   "homekit": {},
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/CubicPill/china_southern_power_grid_stat/issues",
+  "issue_tracker": "https://github.com/chuyu5762/HA-grid-south/issues",
   "requirements": [
     "pycryptodome",
     "brotli"
   ],
   "ssdp": [],
-  "version": "1.2.0",
+  "version": "1.3.0",
   "zeroconf": []
 }

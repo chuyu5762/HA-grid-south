@@ -437,6 +437,10 @@ class CSGOptionsFlowHandler(config_entries.OptionsFlow):
                 if account.account_number == account_num_to_add:
                     # store the account config in main entry instead of creating new entries
                     new_data = self.config_entry.data.copy()
+                    # 单独复制内层 accounts，避免原地污染被遍历的字典
+                    new_data[CONF_ELE_ACCOUNTS] = dict(
+                        self.config_entry.data[CONF_ELE_ACCOUNTS]
+                    )
                     new_data[CONF_ELE_ACCOUNTS][account_num_to_add] = account.dump()
                     # this must be set or update won't be detected
                     new_data[CONF_UPDATED_AT] = str(int(time.time() * 1000))

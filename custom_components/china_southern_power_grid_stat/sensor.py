@@ -568,6 +568,14 @@ class CSGCoordinator(DataUpdateCoordinator):
                 account.account_number,
                 result,
             )
+        elif success:
+            # 请求成功但无数据：南网日电量发布滞后 1~2 天，属正常情况，
+            # 不按错误处理，避免每次刷新都刷 ERROR。
+            yesterday_kwh = STATE_UNAVAILABLE
+            _LOGGER.debug(
+                "Yesterday's kwh not published yet for account %s",
+                account.account_number,
+            )
         else:
             yesterday_kwh = STATE_UNAVAILABLE
             _LOGGER.error(
@@ -1314,7 +1322,12 @@ class CSGCoordinator(DataUpdateCoordinator):
             return {CSGCoordinator.SESSION_EXPIRED: True}
 
         new_config = self._config.copy()
-        for account_number, account_data in self._config[CONF_ELE_ACCOUNTS].items():
+        # 单独复制内层 accounts，切断与 self._config 的共享引用
+        # （浅拷贝会让下面的写入污染正在被遍历的字典）
+        new_config[CONF_ELE_ACCOUNTS] = self._config[CONF_ELE_ACCOUNTS].copy()
+        for account_number, account_data in list(
+            self._config[CONF_ELE_ACCOUNTS].items()
+        ):
             self._gathered_data[account_number] = {}
             account = CSGElectricityAccount.load(account_data)
             # handling the addition of metering point number
@@ -1346,6 +1359,7 @@ class CSGCoordinator(DataUpdateCoordinator):
                 self.hass.config_entries.async_get_entry(self._config_entry_id),
                 data=new_config,
             )
+            self._config = new_config
             _LOGGER.debug("Updated accounts with metering point number")
         _LOGGER.debug("Coordinator update took %s seconds", time.time() - start_time)
         self.hass.data[DOMAIN][self._config_entry_id][
